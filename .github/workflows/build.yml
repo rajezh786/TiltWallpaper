@@ -30,11 +30,11 @@ jobs:
         with:
           gradle-version: '8.7'
 
-      - name: Find Android project
+      - name: Fix Java JVM target
         run: |
-          echo "Searching for Android project..."
-          find project -name settings.gradle -o -name settings.gradle.kts
-          find project -name build.gradle -o -name build.gradle.kts
+          echo "Fixing Java 1.8 -> Java 17..."
+          sed -i 's/JavaVersion.VERSION_1_8/JavaVersion.VERSION_17/g' project/TiltWallpaper/app/build.gradle
+          echo "Java target fixed."
 
       - name: Build APK
         run: |
@@ -46,9 +46,7 @@ jobs:
           fi
 
           echo "Android project found at: $PROJECT_DIR"
-
           cd "$PROJECT_DIR"
-
           gradle assembleDebug --stacktrace
 
       - name: Find APK
