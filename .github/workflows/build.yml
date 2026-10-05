@@ -20,17 +20,29 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
+      - name: Extract project ZIP
+        run: |
+          mkdir project
+          unzip -q *.zip -d project
 
-      - name: Make gradlew executable
-        run: chmod +x gradlew
+      - name: Find Android project
+        run: |
+          echo "Finding Gradle project..."
+          find project -name gradlew -type f
 
-      - name: Build Debug APK
-        run: ./gradlew assembleDebug
+      - name: Build APK
+        run: |
+          GRADLEW=$(find project -name gradlew -type f | head -1)
+          chmod +x "$GRADLEW"
+          cd "$(dirname "$GRADLEW")"
+          ./gradlew assembleDebug --stacktrace
+
+      - name: Find APK
+        run: |
+          find project -name "*.apk" -type f
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: TiltWallpaper-APK
-          path: app/build/outputs/apk/debug/*.apk
+          path: project/**/build/outputs/apk/debug/*.apk
