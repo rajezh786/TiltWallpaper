@@ -25,17 +25,31 @@ jobs:
           mkdir project
           unzip -q *.zip -d project
 
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.7'
+
       - name: Find Android project
         run: |
-          echo "Finding Gradle project..."
-          find project -name gradlew -type f
+          echo "Searching for Android project..."
+          find project -name settings.gradle -o -name settings.gradle.kts
+          find project -name build.gradle -o -name build.gradle.kts
 
       - name: Build APK
         run: |
-          GRADLEW=$(find project -name gradlew -type f | head -1)
-          chmod +x "$GRADLEW"
-          cd "$(dirname "$GRADLEW")"
-          ./gradlew assembleDebug --stacktrace
+          PROJECT_DIR=$(find project -name settings.gradle -o -name settings.gradle.kts | head -1 | xargs dirname)
+
+          if [ -z "$PROJECT_DIR" ]; then
+            echo "ERROR: Android project not found"
+            exit 1
+          fi
+
+          echo "Android project found at: $PROJECT_DIR"
+
+          cd "$PROJECT_DIR"
+
+          gradle assembleDebug --stacktrace
 
       - name: Find APK
         run: |
