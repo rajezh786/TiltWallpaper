@@ -32,9 +32,22 @@ jobs:
 
       - name: Fix Java JVM target
         run: |
-          echo "Fixing Java 1.8 -> Java 17..."
-          sed -i 's/JavaVersion.VERSION_1_8/JavaVersion.VERSION_17/g' project/TiltWallpaper/app/build.gradle
-          echo "Java target fixed."
+          echo "Searching Gradle files..."
+          find project -name "*.gradle" -type f -print
+
+          echo "Replacing Java 1.8 with Java 17..."
+          find project -name "*.gradle" -type f -exec sed -i \
+            -e 's/JavaVersion\.VERSION_1_8/JavaVersion.VERSION_17/g' \
+            -e 's/sourceCompatibility[[:space:]]*=[[:space:]]*1\.8/sourceCompatibility = 17/g' \
+            -e 's/targetCompatibility[[:space:]]*=[[:space:]]*1\.8/targetCompatibility = 17/g' \
+            -e 's/sourceCompatibility[[:space:]]*=[[:space:]]*"1\.8"/sourceCompatibility = "17"/g' \
+            -e 's/targetCompatibility[[:space:]]*=[[:space:]]*"1\.8"/targetCompatibility = "17"/g' \
+            -e 's/sourceCompatibility[[:space:]]*=[[:space:]]*'\''1\.8'\''/sourceCompatibility = '\''17'\''/g' \
+            -e 's/targetCompatibility[[:space:]]*=[[:space:]]*'\''1\.8'\''/targetCompatibility = '\''17'\''/g' \
+            {} \;
+
+          echo "Checking remaining Java 1.8 settings..."
+          grep -R "1.8" project --include="*.gradle" || true
 
       - name: Build APK
         run: |
