@@ -30,24 +30,34 @@ jobs:
         with:
           gradle-version: '8.7'
 
-      - name: Fix Java JVM target
+      - name: Force Java and Kotlin JVM 17
         run: |
-          echo "Searching Gradle files..."
-          find project -name "*.gradle" -type f -print
+          APP_GRADLE="project/TiltWallpaper/app/build.gradle"
 
-          echo "Replacing Java 1.8 with Java 17..."
-          find project -name "*.gradle" -type f -exec sed -i \
-            -e 's/JavaVersion\.VERSION_1_8/JavaVersion.VERSION_17/g' \
-            -e 's/sourceCompatibility[[:space:]]*=[[:space:]]*1\.8/sourceCompatibility = 17/g' \
-            -e 's/targetCompatibility[[:space:]]*=[[:space:]]*1\.8/targetCompatibility = 17/g' \
-            -e 's/sourceCompatibility[[:space:]]*=[[:space:]]*"1\.8"/sourceCompatibility = "17"/g' \
-            -e 's/targetCompatibility[[:space:]]*=[[:space:]]*"1\.8"/targetCompatibility = "17"/g' \
-            -e 's/sourceCompatibility[[:space:]]*=[[:space:]]*'\''1\.8'\''/sourceCompatibility = '\''17'\''/g' \
-            -e 's/targetCompatibility[[:space:]]*=[[:space:]]*'\''1\.8'\''/targetCompatibility = '\''17'\''/g' \
-            {} \;
+          echo "Configuring Java and Kotlin to JVM 17..."
 
-          echo "Checking remaining Java 1.8 settings..."
-          grep -R "1.8" project --include="*.gradle" || true
+          cat >> "$APP_GRADLE" <<'EOF'
+
+          // GitHub Actions: force Java/Kotlin JVM target to 17
+          android {
+              compileOptions {
+                  sourceCompatibility JavaVersion.VERSION_17
+                  targetCompatibility JavaVersion.VERSION_17
+              }
+          }
+
+          tasks.withType(JavaCompile).configureEach {
+              options.release = 17
+          }
+
+          tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
+              kotlinOptions {
+                  jvmTarget = "17"
+              }
+          }
+          EOF
+
+          echo "JVM 17 configuration added."
 
       - name: Build APK
         run: |
